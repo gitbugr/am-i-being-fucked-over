@@ -66,7 +66,7 @@
 					el.classList.remove('hidden');
 				});
 				document.querySelector('#payrise').innerText = Math.abs(toFixed((((100 / breakEven) * salaryEnd)-100) / yearsSince, 2)) + '% per pay period';
-				document.querySelector('#payrise-needed').innerText = '£' + toFixed(breakEven - salaryEnd, 2) + ' (+' + toFixed(((100/salaryEnd) * breakEven) - 100, 2) + '%)';
+				document.querySelector('#payrise-needed').innerText = '£' + Math.abs(toFixed(breakEven - salaryEnd, 2)) + ' (+' + Math.abs(toFixed(((100/salaryEnd) * breakEven) - 100, 2)) + '%)';
 				document.querySelector('#increase').innerText = '£' + Math.abs(toFixed((salaryEnd - breakEven) / yearsSince, 3)) + ' per year';
 				if (fell) {
 					document.querySelectorAll('.fell').forEach((el) => {
@@ -95,7 +95,7 @@
 <body>
 	<div class="container">
 		<h1>How much are you being fucked over?</h1>
-		<p>A salary checker that accounts for inflation, making it easy to know when you're being fucked over.</p>
+		<p>A salary checker that accounts for inflation, making it easy to know when you're being fucked over. (UK-only)</p>
 		<div class="mb-3">
 			<a href="https://www.tuc.org.uk/joinunion"><button type="button" class="btn btn-secondary">Find a union!</button></a>
 		</div>
@@ -117,10 +117,12 @@
 		<h1 class="fell needsYearsSince hidden">YOU ARE BEING FUCKED OVER.</h1>
 		<b class="any hidden">Keep in mind: To be on THE SAME PAY as you were when you started your job, your salary should be: </b><b id="breakEven"></b><b class="any hidden"> per pay period</b>
 		<br />
+		<br />
 		<div class="needsYearsSince">
 			<b class="rose hidden">On average, your payrise has been: </b>
 			<b class="fell hidden">On average, you have LOST: </b>
 			<b id="payrise"></b>
+			<br />
 			<br />
 			<b class="rose hidden">Your salary has increased by: </b>
 			<b class="fell hidden">Your salary has FALLEN by: </b>
