@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<head>
+<style>
+.container {
+	padding-top: 50px;
+}
+.hidden {
+	display: none;
+}
+.fell {
+	color: red;
+}
+</style>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Am I Being Fucked Over? - Pay Checker</title>
+
+<script>
+	let howMuchAmIBeingFuckedOver;
+	(async () => {
+		const boeres = await fetch('https://corsproxy.io/?https://www.bankofengland.co.uk/monetary-policy/inflation/inflation-calculator');
+		const html = await boeres.text();
+		const rates = Object.fromEntries([...html.matchAll(/.*<option value="([0-9]+\.[0-9]*)".*>([0-9]+|[A-Za-z]+ [0-9]+)/gm)].map(match => [match[2], Number(match[1])]));
+
+		Object.keys(rates).forEach((year) => {
+			const yearEl = document.createElement('option');
+			yearEl.value = year;
+			yearEl.innerText = year;
+			document.querySelector('select[name=year]').appendChild(yearEl);
+		});
+		document.querySelector('select[name=year]').value = '2016';
+		document.querySelector('.form').classList.remove('hidden');
+		document.querySelector('.loading').classList.add('hidden');
+
+		document.querySelectorAll("input[type=number]").forEach((el) => el.addEventListener("keypress", function (e) {
+			    const allowedChars = '0123456789.';
+			    function contains(stringValue, charValue) {
+				return stringValue.indexOf(charValue) > -1;
+			    }
+			    const invalidKey = e.key.length === 1 && !contains(allowedChars, e.key) || e.key === '.' && contains(e.target.value, '.');
+			    invalidKey && e.preventDefault();
+		}));
+
+		function toFixed(value, decimal) {
+			return parseFloat(value).toFixed(decimal);
+		}
+
+		howMuchAmIBeingFuckedOver = function () {
+			const jobStart = document.querySelector('select[name=year]').value;
+			const salaryStart = Number(document.querySelector('input[name=salaryStart]').value);
+			const salaryEnd = Number(document.querySelector('input[name=salaryEnd]').value);
+			const currentRate = Object.entries(rates).reverse()[0][1];
+			const breakEven = (currentRate / rates[jobStart]) * salaryStart;
+			const currentYear = (new Date()).getFullYear();
+			const yearStart = isNaN(Number(jobStart)) ? currentYear : Number(jobStart);
+			const yearsSince = (new Date()).getFullYear() - yearStart;
+			const fell = breakEven > salaryEnd;
+			document.querySelector('#breakEven').innerText = '£' + toFixed(breakEven, 2);
+			document.querySelectorAll('.any').forEach((el) => {
+				el.classList.remove('hidden');
+			});
+			if (yearsSince) {
+				document.querySelectorAll('.needsYearsSince').forEach((el) => {
+					el.classList.remove('hidden');
+				});
+				document.querySelector('#payrise').innerText = Math.abs(toFixed((((100 / breakEven) * salaryEnd)-100) / yearsSince, 2)) + '% per pay period';
+				document.querySelector('#payrise-needed').innerText = '£' + toFixed(breakEven - salaryEnd, 2) + ' (+' + toFixed(((100/salaryEnd) * breakEven) - 100, 2) + '%)';
+				document.querySelector('#increase').innerText = '£' + Math.abs(toFixed((salaryEnd - breakEven) / yearsSince, 3)) + ' per year';
+				if (fell) {
+					document.querySelectorAll('.fell').forEach((el) => {
+						el.classList.remove('hidden');
+					});
+					document.querySelectorAll('.rose').forEach((el) => {
+						el.classList.add('hidden');
+					});
+				} else {
+					document.querySelectorAll('.fell').forEach((el) => {
+						el.classList.add('hidden');
+					});
+					document.querySelectorAll('.rose').forEach((el) => {
+						el.classList.remove('hidden');
+					});
+				}
+			} else {
+				document.querySelectorAll('.needsYearsSince').forEach((el) => {
+					el.classList.add('hidden');
+				});
+			}
+		}
+	})();
+</script>
+</head>
+<body>
+	<div class="container">
+		<h1>How much are you being fucked over?</h1>
+		<p>A salary checker that accounts for inflation, making it easy to know when you're being fucked over.</p>
+		<div class="mb-3">
+			<a href="https://www.tuc.org.uk/joinunion"><button type="button" class="btn btn-secondary">Find a union!</button></a>
+		</div>
+		<p class="loading">Loading...</p>
+		<div class="form hidden">
+		<form>
+			<div class="mb-3">
+				<label class="form-label" for="year">Year you started your job: </label><select class="form-control" name="year"></select>
+			</div>
+			<div class="mb-3">
+				<label class="form-label" for="salaryStart">Salary at the start of your job (per year/month/hour): </label><input class="form-control" type="number" name="salaryStart" />
+			</div>
+			<div class="mb-3">
+				<label class="form-label" for="salaryStart">Your salary now (per year/month/hour): </label><input class="form-control" type="number" name="salaryEnd" />
+			</div>
+			<input class="btn btn-primary" type="button" onclick="howMuchAmIBeingFuckedOver()" value="Tell me"/>
+		</form>
+		<br />
+		<h1 class="fell needsYearsSince hidden">YOU ARE BEING FUCKED OVER.</h1>
+		<b class="any hidden">Keep in mind: To be on THE SAME PAY as you were when you started your job, your salary should be: </b><b id="breakEven"></b><b class="any hidden"> per pay period</b>
+		<br />
+		<div class="needsYearsSince">
+			<b class="rose hidden">On average, your payrise has been: </b>
+			<b class="fell hidden">On average, you have LOST: </b>
+			<b id="payrise"></b>
+			<br />
+			<b class="rose hidden">Your salary has increased by: </b>
+			<b class="fell hidden">Your salary has FALLEN by: </b>
+			<b id="increase"></b>
+			<div class="mb-3">
+			<b class="fell hidden">To make up for this, you need a payrise of at least: </b>
+			<b id="payrise-needed"></b>
+			<br />
+			<br />
+			<b class="fell hidden">You should be getting a pay RISE, not a reset! Know your worth! Join a union and ask for help!</b>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
